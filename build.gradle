@@ -8,12 +8,15 @@ buildscript {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
     }
 }
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.15.2-0.2.1'
+version = '1.15.2-0.2.1a'
 group = 'vectorwing.farmersdelight' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'FarmersDelight'
 
@@ -98,6 +101,13 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.k-4u.nl"
     }
+    maven { // Registrate
+        url "http://maven.tterrag.com/"
+    }
+}
+
+configurations {
+    shade
 }
 
 sourceSets.main.resources {
@@ -110,11 +120,11 @@ dependencies {
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
     minecraft 'net.minecraftforge:forge:1.15.2-31.2.31'
 
-    // You may put jars on which you depend on in ./libs or you may define them like so..
-    // compile "some.group:artifact:version:classifier"
-    // compile "some.group:artifact:version"
+    def registrate = "com.tterrag.registrate:Registrate:MC${mc_version}-${registrate_version}"
+    implementation fg.deobf(registrate)
+    shade registrate
+
     compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api")
-    // at runtime, use the full JEI jar
     runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}")
 
     // Real examples
@@ -147,6 +157,16 @@ jar {
         ])
     }
 }
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    relocate 'com.tterrag.registrate', 'com.mymod.repack.registrate'
+}
+
+reobf {
+    shadowJar {}
+}
+
 
 // Example configuration to allow publishing using the maven-publish task
 // This is the preferred method to reobfuscate your jar file
